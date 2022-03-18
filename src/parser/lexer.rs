@@ -3,6 +3,10 @@ pub fn is_decimal_digit(chr: char) -> bool {
 }
 
 pub fn is_identifier(s: char) -> bool {
+    // TODO: Weird conversion from char -> &str see if there is a better way to handler this
+    let mut b = [0; 4];
+    let s = s.encode_utf8(&mut b);
+
     if s == "" {
         return false;
     }

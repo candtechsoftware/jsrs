@@ -75,7 +75,7 @@ impl Parser {
                         (literal, parsed_literal, has_escaped) = result.unwrap();
                         if parsed_literal.len() > 1 {
                             let mut strict: bool;
-                            (tkn, strict) = is_keyword(parsed_literal);
+                            (tkn, strict) = is_keyword(&parsed_literal);
                             if has_escaped {
                                 self.insert_semicolon = true;
                                 if tkn != 0 && tkn != Token::Let as usize
@@ -187,6 +187,6 @@ pub struct Recover {
     pub count: usize,
 }
 
-pub fn is_keyword(token: String) -> (Token, bool) {
+pub fn is_keyword(token: &String) -> (Token, bool) {
     unimplemented!();
 }
