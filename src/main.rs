@@ -1,4 +1,5 @@
 mod file;
+mod parser;
 mod utils;
 
 use file::position::InFilePosition;
