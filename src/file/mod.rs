@@ -1,127 +1,144 @@
-use super::utils::sourcemap::consumer::Consumer;
-use std::sync::Mutex;
-use url::{ParseError, Url};
-
 pub mod position;
 
-use position::Postion;
+use position::InFilePosition;
+use sourcemap::SourceMap;
+use std::sync::{Arc, Mutex};
 
-pub struct File<'a> {
-    mu: Mutex<()>,
+#[derive(Clone)]
+pub struct FileSet {
+    pub files: Vec<File>,
+    pub last: Option<File>,
+}
 
-    pub name: &'a str,
-    pub src: &'a str,
+impl FileSet {
+    pub fn new() -> Self {
+        Self {
+            files: Vec::default(),
+            last: None,
+        }
+    }
+
+    pub fn add_file(&mut self, filename: &str, src: String) -> usize {
+        let base = self.next_base();
+        let file = File {
+            name: String::from(filename),
+            src,
+            base,
+            source_map: None,
+            line_offsets: Arc::new(Mutex::new(Vec::new())),
+            last_scanned_offset: 0,
+        };
+        self.files.push(file.clone());
+        self.last = Some(file);
+        base
+    }
+
+    fn next_base(&self) -> usize {
+        match &self.last {
+            None => return 1,
+            Some(last) => return last.base + last.src.len() + 1,
+        }
+    }
+
+    fn file(self, idx: usize) -> Option<File> {
+        for file in self.files {
+            if idx <= file.base + file.src.len() {
+                return Some(file);
+            }
+        }
+        None
+    }
+    fn postion(&mut self, idx: usize) -> Option<InFilePosition> {
+        for file in &mut self.files {
+            if idx <= file.base + file.src.len() {
+                let pos = file.postion(idx - file.base).clone();
+                return Some(pos);
+            }
+        }
+        None
+    }
+}
+
+#[derive(Clone)]
+pub struct File {
+    pub name: String,
+    pub src: String,
     pub base: usize,
-    pub source_map: Option<Consumer<'a>>,
-    pub line_offsets: Vec<i32>,
+    pub source_map: Option<SourceMap>,
+    pub line_offsets: Arc<Mutex<Vec<usize>>>,
     pub last_scanned_offset: i32,
 }
 
-impl<'a> File<'a> {
+impl<'a> File {
     pub fn new(
         name: &'a str,
         src: &'a str,
         base: usize,
-        line_offsets: Vec<i32>,
+        line_offsets: Vec<usize>,
         last_scanned_offset: i32,
     ) -> Self {
         Self {
-            mu: Mutex::new(()),
-            name,
-            src,
+            name: String::from(name),
+            src: String::from(src),
             base,
             source_map: None,
-            line_offsets,
+            line_offsets: Arc::new(Mutex::new(line_offsets)),
             last_scanned_offset,
         }
     }
 
-    pub fn set_sourcemap(&mut self, map: Consumer<'a>) {
-        self.source_map = Some(map);
+    pub fn set_sourcemap(&mut self, map: Option<SourceMap>) {
+        self.source_map = map;
     }
 
-    pub fn postion(&mut self, offset: i32) -> Postion {
-        let mut line: i32;
-        let mut lines_offsets: Vec<i32> = vec![];
-
-        let gaurd = self.mu.lock().unwrap();
-
-        if offset > self.last_scanned_offset {
+    pub fn postion(&mut self, offset: usize) -> InFilePosition {
+        let mut line: usize;
+        if offset > self.last_scanned_offset as usize {
             line = self.scan_to(offset);
-            lines_offsets = self.line_offsets.clone();
-            drop(gaurd);
         } else {
-            lines_offsets = self.line_offsets.clone();
-            drop(gaurd);
-            lines_offsets.sort();
-            line = lines_offsets.iter().find(|&item| item > &offset).unwrap() - 1 as i32;
+            line = 10; // to implement;
         }
 
         let mut line_start = 0;
         if line >= 0 {
-            line_start = lines_offsets[line as usize];
+            line_start = self.line_offsets.lock().unwrap()[line];
         }
 
         let row = line + 2;
         let col = offset - line_start + 1;
 
-        if let Some(mp) = &mut self.source_map {
-            match mp.source(row, col) {
-                Some((source, _, row2, col2, ok)) => {
-                    if ok {
-                        return Postion {
-                            filename: resolve_sourcemap_url(
-                                self.name.to_string(),
-                                source.to_string(),
-                            ),
-                            line: row2,
-                            column: col2,
-                        };
-                    }
+        match &mut self.source_map {
+            Some(map) => {
+                if let Ok((source, line, column)) = get_orginal_source(map, row, col) {
+                    return InFilePosition {
+                        filename: resolve_file_name(self.name.clone(), source),
+                        line,
+                        column,
+                    };
                 }
-                None => (),
             }
+            None => {}
         }
 
-        Postion::new(self.name.to_string(), row, col)
+        InFilePosition {
+            filename: self.name.clone(),
+            line: row,
+            column: col,
+        }
     }
 
-    fn scan_to(&self, offset: i32) -> i32 {
-        0 as i32
+    fn scan_to(&self, offset: usize) -> usize {
+        0 as usize
     }
 }
 
-// TODO: Need to optiomize this or find a library that will do similar work
-fn resolve_sourcemap_url<'a>(base_name: String, source: String) -> String {
-    let url_res = Url::parse(source.as_str());
-    // if url is absolut and valid just return it
-    if url_res.is_ok() {
-        return url_res.unwrap().to_string();
-    }
-
-    if let Err(err) = url_res {
-        if err == ParseError::RelativeUrlWithoutBase {
-            let base_url = Url::parse(base_name.as_str());
-            if let Err(err) = base_url {
-                if err == ParseError::RelativeUrlWithoutBase {
-                    let mut base_vec: Vec<&str> = base_name.split("/").collect();
-                    base_vec.pop();
-                    let base = base_vec.join("/");
-                    let base_str = base.as_str();
-                    let source_str = source.as_str();
-                    let base_path = std::path::Path::new(&base_str);
-                    let source_path = std::path::Path::new(&source_str);
-                    let joined_path = base_path.join(source_path);
-                    let path = joined_path.to_str().unwrap();
-                    return Url::parse(path).unwrap().to_string();
-                }
-                let base_path = std::path::Path::new(base_name.as_str());
-                let source_path = std::path::Path::new(source.as_str());
-                let joined_path = base_path.join(source_path);
-                let path = joined_path.to_str().unwrap();
-                return Url::parse(path).unwrap().to_string();
-            }
-        }
-    };
-    "".to_string()
+fn get_orginal_source(
+    map: &mut SourceMap,
+    row: usize,
+    col: usize,
+) -> Result<(String, usize, usize), String> {
+    Err(String::from("Not implemtneted"))
+}
+fn resolve_file_name(name: String, source: String) -> String {
+    String::from("not implemtneted")
 }

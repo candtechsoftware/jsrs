@@ -1,12 +1,12 @@
 #[derive(Clone)]
-pub struct Postion {
+pub struct InFilePosition {
     pub filename: String,
-    pub line: i32,
-    pub(crate) column: i32,
+    pub line: usize,
+    pub(crate) column: usize,
 }
 
-impl Postion {
-    pub fn new(filename: String, line: i32, column: i32) -> Self {
+impl InFilePosition {
+    pub fn new(filename: String, line: usize, column: usize) -> Self {
         Self {
             filename,
             line,
