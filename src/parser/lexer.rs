@@ -2,7 +2,7 @@ pub fn is_decimal_digit(chr: char) -> bool {
     return '0' <= chr && chr <= '9';
 }
 
-pub fn is_identifier(s: &str) -> bool {
+pub fn is_identifier(s: char) -> bool {
     if s == "" {
         return false;
     }

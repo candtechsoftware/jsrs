@@ -1,9 +1,10 @@
+#[derive(Default)]
 pub struct Scope {
-    outer: Box<Scope>,
-    allow_in: bool,
-    allow_let: bool,
-    in_iteration: bool,
-    in_switch: bool,
-    declaration_list: Vec<()>,
-    labels: Vec<String>,
+    pub outer: Box<Scope>,
+    pub allow_in: bool,
+    pub allow_let: bool,
+    pub in_iteration: bool,
+    pub in_switch: bool,
+    pub declaration_list: Vec<()>,
+    pub labels: Vec<String>,
 }

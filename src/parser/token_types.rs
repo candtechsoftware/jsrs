@@ -1,110 +1,128 @@
 pub enum Token {
-    ILLEGAL,
+    Illegal,
     EOF,
-    COMMENT,
+    Comment,
 
-    STRING,
-    NUMBER,
-    PLUS,      // +
-    MINUS,     // -
-    MULTIPLY,  // *
-    SLASH,     // /
-    REMAINDER, // %
+    String,
+    Number,
+    Plus,      // +
+    Minus,     // -
+    Multiply,  // *
+    Slash,     // /
+    Remainder, // %
 
-    AND,                  // &
-    OR,                   // |
-    EXCLUSIVE_OR,         // ^
-    SHIFT_LEFT,           // <<
-    SHIFT_RIGHT,          // >>
-    UNSIGNED_SHIFT_RIGHT, // >>>
+    And,                // &
+    Or,                 // |
+    ExclusiveOr,        // ^
+    ShiftLeft,          // <<
+    ShiftRight,         // >>
+    UnsignedShiftRight, // >>>
 
-    ADD_ASSIGN,       // +=
-    SUBTRACT_ASSIGN,  // -=
-    MULTIPLY_ASSIGN,  // *=
-    QUOTIENT_ASSIGN,  // /=
-    REMAINDER_ASSIGN, // %=
+    AddAssign,       // +=
+    SubtractAssign,  // -=
+    MultiplyAssign,  // *=
+    QuotientAssign,  // /=
+    RemainderAssign, // %=
 
-    AND_ASSIGN,                  // &=
-    OR_ASSIGN,                   // |=
-    EXCLUSIVE_OR_ASSIGN,         // ^=
-    SHIFT_LEFT_ASSIGN,           // <<=
-    SHIFT_RIGHT_ASSIGN,          // >>=
-    UNSIGNED_SHIFT_RIGHT_ASSIGN, // >>>=
+    AndAssign,                // &=
+    OrAssign,                 // |=
+    ExclusiveOrAssign,        // ^=
+    ShiftLeftAssign,          // <<=
+    ShiftRightAssign,         // >>=
+    UnsignedShiftRightAssign, // >>>=
 
-    LOGICAL_AND, // &&
-    LOGICAL_OR,  // ||
-    INCREMENT,   // ++
-    DECREMENT,   // --
+    LogicalAnd, // &&
+    LogicalOr,  // ||
+    Increment,  // ++
+    Decrement,  // --
 
-    EQUAL,        // ==
-    STRICT_EQUAL, // ===
-    LESS,         // <
-    GREATER,      // >
-    ASSIGN,       // =
-    NOT,          // !
+    Equal,       // ==
+    StrictEqual, // ===
+    Less,        // <
+    Greater,     // >
+    Assign,      // =
+    Not,         // !
 
-    BITWISE_NOT, // ~
+    BitwiseNot, // ~
 
-    NOT_EQUAL,        // !=
-    STRICT_NOT_EQUAL, // !==
-    LESS_OR_EQUAL,    // <=
-    GREATER_OR_EQUAL, // >=
+    NotEqual,       // !=
+    StrictNotEqual, // !==
+    Lessorequal,    // <=
+    Greaterorequal, // >=
 
-    LEFT_PARENTHESIS, // (
-    LEFT_BRACKET,     // [
-    LEFT_BRACE,       // {
-    COMMA,            // ,
-    PERIOD,           // .
+    Leftparenthesis, // (
+    Leftbracket,     // [
+    Leftbrace,       // {
+    Comma,           // ,
+    Period,          // .
 
-    RIGHT_PARENTHESIS, // )
-    RIGHT_BRACKET,     // ]
-    RIGHT_BRACE,       // }
-    SEMICOLON,         // ;
-    COLON,             // :
-    QUESTION_MARK,     // ?
-    QUESTION_DOT,      // ?.
-    ARROW,             // =>
-    ELLIPSIS,          // ...
-    BACKTICK,          // `
+    RightParenthesis, // )
+    RightBracket,     // ]
+    RightBrace,       // }
+    Semicolon,        // ;
+    Colon,            // :
+    QuestionMark,     // ?
+    QuestionDot,      // ?.
+    Arrow,            // =>
+    Ellipsis,         // ...
+    Backtick,         // `
 
-    // tokens below (and only them) are syntactically valid identifiers
-    IDENTIFIER,
-    KEYWORD,
-    BOOLEAN,
-    NULL,
+    // Tokens Below (and Only Them) Are Syntactically Valid Identifiers
+    Identifier,
+    Keyword,
+    Boolean,
+    Null,
 
-    IF,
-    IN,
-    OF,
-    DO,
-    VAR,
-    LET,
-    FOR,
-    NEW,
-    TRY,
+    If,
+    In,
+    Of,
+    Do,
+    Var,
+    Let,
+    For,
+    New,
+    Try,
 
-    THIS,
-    ELSE,
-    CASE,
-    VOID,
-    WITH,
+    This,
+    Else,
+    Case,
+    Void,
+    With,
 
-    CONST,
-    WHILE,
-    BREAK,
-    CATCH,
-    THROW,
-    RETURN,
-    TYPEOF,
-    DELETE,
-    SWITCH,
+    Const,
+    While,
+    Break,
+    Catch,
+    Throw,
+    Return,
+    Typeof,
+    Delete,
+    Switch,
 
-    DEFAULT,
-    FINALLY,
+    DefaultToken,
+    Finally,
 
-    FUNCTION,
-    CONTINUE,
-    DEBUGGER,
+    Function,
+    Continue,
+    Debugger,
 
-    INSTANCEOF,
+    Instanceof,
+}
+
+impl Default for Token {
+    fn default() -> Self {
+        Token::Illegal
+    }
+}
+
+impl PartialEq<usize> for Token {
+    fn eq(&self, other: &usize) -> bool {
+        (*self as usize).eq(other)
+    }
+}
+
+impl PartialOrd<usize> for Token {
+    fn partial_cmp(&self, other: &usize) -> Option<std::cmp::Ordering> {
+        (*self as usize).partial_cmp(other)
+    }
 }

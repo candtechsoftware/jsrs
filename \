@@ -1,0 +1,94 @@
+use crate::file::position::InFilePosition;
+use crate::file::File;
+
+use super::scope::Scope;
+use super::token_types::Token;
+
+#[derive(Default)]
+pub struct Parser {
+    pub str: String,
+    pub len: usize,
+    pub base: usize,
+
+    pub chr: char,
+    pub char_offset: usize,
+    pub offset: usize,
+
+    pub idx: usize,
+
+    pub token: Token,
+    pub literal: String,
+
+    pub scope: Box<Scope>,
+    pub insert_semicolon: bool,
+    pub implicit_semicolon: bool,
+
+    pub errors: Vec<String>,
+
+    pub recover: Recover,
+
+    pub mode: Mode,
+
+    pub opts: Option<Options>,
+
+    pub file: Option<File>,
+}
+
+impl Parser {
+    pub fn new(filename: &str, src: &str, base: usize, opts: Option<Options>) -> Self {
+        Self {
+            chr: ' ',
+            str: String::from(src),
+            len: src.len(),
+            base,
+            file: Some(File::new(filename, src, base, Vec::new(), 0)),
+            opts,
+            ..Default::default()
+        }
+    }
+
+    pub fn next(self) {}
+    pub fn error_unexpected_token(&self, value: &Token) {}
+
+    pub fn semicolon(&mut self) {
+        match self.token {
+            Token::RightParenthesis | Token::RightBracket => {}
+            _ => {
+                if self.implicit_semicolon {
+                    self.insert_semicolon = false;
+                    return;
+                }
+                *self.expect(Token::Semicolon);
+            }
+        }
+    }
+
+    pub fn idx_of(self, offset: usize) -> usize {
+        self.base + offset
+    }
+    pub fn expect(self, value: Token) -> usize {
+        let idx = self.idx;
+        if self.token != value as usize {
+            self.error_unexpected_token(&self.token)
+        }
+        self.next();
+        idx
+    }
+
+    pub fn position(self, idx: usize) -> InFilePosition {
+        let position = self.file.unwrap().postion(idx - self.base);
+        position
+    }
+}
+
+#[derive(Default)]
+pub struct Options {}
+#[derive(Default)]
+pub struct Mode {}
+
+#[derive(Default)]
+pub struct Recover {
+    pub idx: usize,
+
+    pub count: usize,
+}
